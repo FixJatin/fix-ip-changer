@@ -11,8 +11,8 @@ import time
 
 import requests
 
-VERSION = "1.0"
-AUTHOR = "FixJatin"
+VERSION = "1.1"
+AUTHOR = "Tom"
 GITHUB = "https://github.com/tom0ps"
 
 PROXIES = {
@@ -96,19 +96,28 @@ def print_header():
 # ---------- helpers ----------
 def get_ip(use_tor=True, timeout=10):
     try:
-        r = requests.get("https://api.ipify.org", timeout=timeout,
-                         proxies=PROXIES if use_tor else None)
-        return r.text.strip()
+        r = requests.get(
+            "https://api.ipify.org",
+            timeout=timeout,
+            proxies=PROXIES if use_tor else None,
+        )
+        r.raise_for_status()
+        ip = r.text.strip()
+        return ip if re.fullmatch(r"(?:\\d{1,3}\\.){3}\\d{1,3}", ip) else None
     except requests.RequestException:
         return None
 
 
 def get_country(ip):
     try:
-        r = requests.get(f"http://ip-api.com/line/{ip}?fields=country",
-                         proxies=PROXIES, timeout=6)
-        text = r.text.strip()
-        return text if r.ok and text and len(text) < 40 else None
+        r = requests.get(
+            f"https://ipapi.co/{ip}/country_name/",
+            proxies=PROXIES,
+            timeout=8,
+        )
+        r.raise_for_status()
+        country = r.text.strip()
+        return country if country and len(country) < 80 else None
     except requests.RequestException:
         return None
 
@@ -205,7 +214,7 @@ def main():
 
     interval = args.interval if args.interval >= 5 else ask_interval()
     if args.random_max and args.random_max < interval:
-        err("--random-max must be bigger than the interval.")
+        err("--random-max must be greater than or equal to the interval.")
         sys.exit(1)
 
     if args.random_max:
@@ -216,7 +225,10 @@ def main():
 
     info("Checking for Tor connection...")
     if tor_running():
-        systemctl("restart")
+        info("Restarting Tor service...")
+        if not systemctl("restart"):
+            err("Could not restart Tor service.")
+            sys.exit(1)
     else:
         err("Tor is not running.")
         info("Starting Tor service...")
@@ -241,7 +253,10 @@ def main():
                 break
             wait = random.randint(interval, args.random_max) if args.random_max else interval
             countdown(wait)
-            systemctl("restart")
+            info("Restarting Tor service for the next circuit...")
+            if not systemctl("restart"):
+                err("Tor restart failed. Stopping safely.")
+                break
     except KeyboardInterrupt:
         print()
     warn("Exiting...")
