@@ -7,8 +7,8 @@ It works by restarting the Tor service, which gives you a fresh exit IP. No Tor 
 ## Quick start (Kali Linux)
 
 ```bash
-git clone https://github.com/FixJatin/fix-ip-changer.git
-cd fix-ip-changer
+git clone https://github.com/tom0ps/fix-ip-changer.git
+cd tom-ip-changer
 sudo apt install tor python3-requests python3-socks -y
 sudo python3 ip_changer.py
 ```
@@ -73,4 +73,4 @@ MIT, see [LICENSE](LICENSE).
 
 ## Author
 
-[FixJatin](https://github.com/FixJatin)
+[FixJatin](https://github.com/tom0ps)
